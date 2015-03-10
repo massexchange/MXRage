@@ -2,6 +2,27 @@ var fs = require("fs"),
 	path = require("path"),
 	TVRage = require("tvragejson"),
 	xlsx = require('node-xlsx');
+	moment = require("moment");
+
+var dayParts = {
+	2: "Overnight",
+	4: "Early Morning",
+	6: "Breakfast",
+	10: "Daytime",
+	17: "Primetime",
+	23: "Late Night"
+};
+
+var determineDayPart = function(time) {
+	var tryGetPart = function(hour) {
+    if(hour == 0) hour = 24;
+
+		return dayParts[hour]
+			? dayParts[hour]
+			: tryGetPart(--hour);
+	};
+	return tryGetPart(Math.floor(time));
+};
 
 var indent = function(times) { return Array(times ? times : 1).join('\t'); };
 
@@ -14,8 +35,12 @@ var printShow = function(show) {
 	console.log(indent(2), "Link: ", show.link);
 };
 
+var parseTime = function(time) {
+	return moment(time, "hh:mm a");
+};
+
 var printTime = function(time) {
-	console.log(indent(), "Time: ", time.$.attr);
+	console.log(indent(), "Time: ", parseTime(time.$.attr).format("h:mm A"));
 	time.show.forEach(printShow);
 };
 
