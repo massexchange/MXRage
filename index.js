@@ -44,7 +44,10 @@ var parseDay = function(day) {
 };
 
 var printTime = function(time) {
-	console.log(indent(), "Time: ", parseTime(time.$.attr).format("h:mm A"));
+	var parsedTime = parseTime(time.$.attr);
+	console.log(indent(), "Time: ", parsedTime.format("h:mm A"));
+	console.log(indent(), "DayPart: ", determineDayPart(parsedTime.hour()));
+	console.log("Shows: ");
 	time.show.forEach(printShow);
 };
 
