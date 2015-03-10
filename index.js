@@ -1,4 +1,6 @@
-var TVRage = require("tvragejson"),
+var fs = require("fs"),
+	path = require("path"),
+	TVRage = require("tvragejson"),
 	xlsx = require('node-xlsx');
 
 var indent = function(times) { return Array(times ? times : 1).join('\t'); };
@@ -22,9 +24,35 @@ var printDay = function(day) {
 	day.time.forEach(printTime);
 };
 
-console.log("requesting full schedule...");
-TVRage.fullSchedule("US", function(err, res) {
-	console.log("schedule get!");
-	var schedule = res.schedule;
+var printSchedule = function(schedule) {
 	schedule.DAY.forEach(printDay);
-});
+};
+
+var saveSchedule = function(schedule) {
+	fs.writeFile(path.join(__dirname, "schedule.json"), JSON.stringify(schedule), function(err) {
+        if(err) console.log(err);
+    });
+};
+
+var fetchSchedule = function(cb) {
+	TVRage.fullSchedule("US", function(err, res) {
+		console.log("schedule get!");
+		saveSchedule(res.schedule);
+		cb(res.schedule);
+	});
+};
+
+var loadSchedule = function(cb) {
+	fs.readFile(path.join(__dirname, "schedule.json"), function(err, contents) {
+		if(err && err.code == "ENOENT") {
+			fetchSchedule(cb);
+			return;
+		}
+
+		var schedule = JSON.parse(contents);
+		cb(schedule);
+	});
+};
+
+console.log("requesting full schedule...");
+loadSchedule(printSchedule);
