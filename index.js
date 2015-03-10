@@ -15,7 +15,7 @@ var dayParts = {
 
 var determineDayPart = function(time) {
 	var tryGetPart = function(hour) {
-    if(hour == 0) hour = 24;
+    if(hour === 0) hour = 24;
 
 		return dayParts[hour]
 			? dayParts[hour]
@@ -86,5 +86,57 @@ var loadSchedule = function(cb) {
 	});
 };
 
+var generateInventory = function(schedule) {
+	var generateImpressions = function() {
+		var upperBound = 150;
+		var lowerBound = 30;
+		return Math.floor(lowerBound + ((upperBound - lowerBound) * Math.random()));
+	};
+
+	var inventory = schedule.DAY.map(function(day) {
+		var parsedDay = parseDay(day.$.attr).format("MMM Do, YYYY");
+		return day.time.map(function(time) {
+			var parsedTime = parseTime(time.$.attr);
+
+			return time.show.map(function(show) {
+				return {
+					Day: parsedDay,
+					Time: parsedTime.format("h:mm A"),
+					Network: show.network[0],
+					Show: show.$.name,
+					Episode: show.ep[0],
+					Title: show.title[0],
+					Daypart: determineDayPart(parsedTime.hour()),
+					Impressions: generateImpressions()
+				};
+			});
+		}).reduce(function(a, b) {
+			return a.concat(b);
+		});
+	}).reduce(function(a, b) {
+		return a.concat(b);
+	});
+
+	return inventory;
+};
+
+var createExcelFile = function(inventory, cb) {
+	fs.writeFile("schedule.xlsx", xlsx.build([{name: "Market View", data: inventory}]), cb);
+};
+
 console.log("requesting full schedule...");
-loadSchedule(printSchedule);
+loadSchedule(function(schedule) {
+	//printSchedule(schedule);
+	console.log("generating inventory...");
+	var inventory = generateInventory(schedule);
+	console.log(inventory);
+	console.log("writing excel file...");
+	createExcelFile(inventory, function(err) {
+		if(err) {
+			console.log(err);
+			return;
+		}
+
+		console.log("file written!");
+	});
+});
