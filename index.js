@@ -1,7 +1,7 @@
 var fs = require("fs"),
 	path = require("path"),
 	TVRage = require("tvragejson"),
-	xlsx = require('node-xlsx');
+	xlsx = require('node-xlsx'),
 	moment = require("moment");
 
 var dayParts = {
@@ -39,13 +39,17 @@ var parseTime = function(time) {
 	return moment(time, "hh:mm a");
 };
 
+var parseDay = function(day) {
+	return moment(day, "YYYY-M-D");
+};
+
 var printTime = function(time) {
 	console.log(indent(), "Time: ", parseTime(time.$.attr).format("h:mm A"));
 	time.show.forEach(printShow);
 };
 
 var printDay = function(day) {
-	console.log("Day: ", day.$.attr);
+	console.log("Day: ", parseDay(day.$.attr).format("MMM Do, YYYY"));
 	day.time.forEach(printTime);
 };
 
