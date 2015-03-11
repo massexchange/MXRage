@@ -121,7 +121,12 @@ var generateInventory = function(schedule) {
 };
 
 var createExcelFile = function(inventory, cb) {
-	fs.writeFile("schedule.xlsx", xlsx.build([{name: "Market View", data: inventory}]), cb);
+	var colNames = Object.keys(inventory[0]);
+	var records = [colNames].concat(inventory.map(function(inv) {
+		return colNames.map(function(key) { return inv[key]; });
+	}));
+
+	fs.writeFile("schedule.xlsx", xlsx.build([{name: "Market View", data: records}]), cb);
 };
 
 console.log("requesting full schedule...");
