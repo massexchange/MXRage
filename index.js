@@ -94,13 +94,13 @@ var generateInventory = function(schedule) {
 	};
 
 	var inventory = schedule.DAY.map(function(day) {
-		var parsedDay = parseDay(day.$.attr).format("MMM Do, YYYY");
+		var parsedDay = parseDay(day.$.attr)._d;
 		return day.time.map(function(time) {
 			var parsedTime = parseTime(time.$.attr);
 
 			return time.show.map(function(show) {
 				return {
-					Day: parsedDay,
+					MONTH: parsedDay,
 					Time: parsedTime.format("h:mm A"),
 					Network: show.network[0],
 					Show: show.$.name,
