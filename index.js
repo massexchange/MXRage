@@ -93,7 +93,11 @@ var generateInventory = function(schedule) {
 		return Math.floor(lowerBound + ((upperBound - lowerBound) * Math.random()));
 	};
 
+	var concat = function(a, b) {
+		return a.concat(b);
+	};
 	var inventory = schedule.DAY.map(function(day) {
+
 		var parsedDay = parseDay(day.$.attr)._d;
 		return day.time.map(function(time) {
 			var parsedTime = parseTime(time.$.attr);
@@ -110,12 +114,8 @@ var generateInventory = function(schedule) {
 					Impressions: generateImpressions()
 				};
 			});
-		}).reduce(function(a, b) {
-			return a.concat(b);
-		});
-	}).reduce(function(a, b) {
-		return a.concat(b);
-	});
+		}).reduce(concat);
+	}).reduce(concat);
 
 	return inventory;
 };
@@ -134,7 +134,7 @@ loadSchedule(function(schedule) {
 	//printSchedule(schedule);
 	console.log("generating inventory...");
 	var inventory = generateInventory(schedule);
-	console.log(inventory);
+	//console.log(inventory);
 	console.log("writing excel file...");
 	createExcelFile(inventory, function(err) {
 		if(err) {
