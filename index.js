@@ -2,7 +2,17 @@ var fs = require("fs"),
 	path = require("path"),
 	TVRage = require("tvragejson"),
 	xlsx = require('node-xlsx'),
-	moment = require("moment");
+	moment = require("moment"),
+	nconf = require("nconf"),
+
+	DMAs = require("./dmas.json");
+
+nconf.file("config.json").defaults({
+	impressions: {
+		upper: 150,
+		lower: 30
+	}
+});
 
 var dayParts = {
 	2: "Overnight",
@@ -24,6 +34,14 @@ var determineDayPart = function(time) {
 	return tryGetPart(Math.floor(time));
 };
 
+var parseTime = function(time) {
+	return moment(time, "hh:mm a");
+};
+
+var parseDay = function(day) {
+	return moment(day, "YYYY-M-D");
+};
+
 var indent = function(times) { return Array(times ? times : 1).join('\t'); };
 
 var printShow = function(show) {
@@ -33,14 +51,6 @@ var printShow = function(show) {
 	console.log(indent(2), "Title: ", show.title);
 	console.log(indent(2), "Network: ", show.network);
 	console.log(indent(2), "Link: ", show.link);
-};
-
-var parseTime = function(time) {
-	return moment(time, "hh:mm a");
-};
-
-var parseDay = function(day) {
-	return moment(day, "YYYY-M-D");
 };
 
 var printTime = function(time) {
@@ -67,6 +77,7 @@ var saveSchedule = function(schedule) {
 };
 
 var fetchSchedule = function(cb) {
+	console.log("requesting full schedule...");
 	TVRage.fullSchedule("US", function(err, res) {
 		console.log("schedule get!");
 		saveSchedule(res.schedule);
@@ -75,34 +86,44 @@ var fetchSchedule = function(cb) {
 };
 
 var loadSchedule = function(cb) {
+	console.log("checking for cached schedule...");
 	fs.readFile(path.join(__dirname, "schedule.json"), function(err, contents) {
 		if(err && err.code == "ENOENT") {
+			console.log("no cache!");
 			fetchSchedule(cb);
 			return;
 		}
-
+		console.log("loaded!");
 		var schedule = JSON.parse(contents);
 		cb(schedule);
 	});
 };
 
+var concat = function(a, b) {
+	return a.concat(b);
+};
+var generateImpressions = function() {
+	var upperBound = nconf.get("impressions:upper");
+	var lowerBound = nconf.get("impressions:lower");
+	return Math.floor(lowerBound + ((upperBound - lowerBound) * Math.random()));
+};
+var excludeIgnoredCols = function(inv) {
+	nconf.get("columns:ignored").forEach(function(col) {
+		delete inv[col];
+	});
+	return inv;
+};
 var generateInventory = function(schedule) {
-	var generateImpressions = function() {
-		var upperBound = 150;
-		var lowerBound = 30;
-		return Math.floor(lowerBound + ((upperBound - lowerBound) * Math.random()));
-	};
-
-	var concat = function(a, b) {
-		return a.concat(b);
-	};
+	console.log("converting to inventory...");
 	var inventory = schedule.DAY.map(function(day) {
-
 		var parsedDay = parseDay(day.$.attr)._d;
-		return day.time.map(function(time) {
+
+		var times = Array.isArray(day.time) ? day.time : [day.time];
+		return times.map(function(time) {
 			var parsedTime = parseTime(time.$.attr);
 
-			return time.show.map(function(show) {
+			var shows = Array.isArray(time.show) ? time.show : [time.show];
+			return shows.map(function(show) {
 				return {
 					MONTH: parsedDay,
 					Time: parsedTime.format("h:mm A"),
@@ -113,35 +134,64 @@ var generateInventory = function(schedule) {
 					Daypart: determineDayPart(parsedTime.hour()),
 					Impressions: generateImpressions()
 				};
-			});
+			}).map(excludeIgnoredCols);
 		}).reduce(concat);
 	}).reduce(concat);
+	console.log("conversion complete!");
+
+	if(nconf.get("dmas")) {
+		console.log("crossing with dmas...");
+		inventory = DMAs.map(function(dma) {
+			return inventory.map(function(inv) {
+				inv.DMA = dma[1];
+				return inv;
+			});
+		}).reduce(concat);
+		console.log("dmas complete!");
+	}
+
+	var slots = nconf.get("slots");
+	if(slots) {
+		console.log("crossing with slots...");
+		inventory = slots.map(function(slot) {
+			return inventory.map(function(inv) {
+				inv.Slot = slot + " secs";
+				return inv;
+			});
+		}).reduce(concat);
+		console.log("slots complete!");
+	}
+
+	console.log("inventory generated!");
 
 	return inventory;
 };
 
 var createExcelFile = function(inventory, cb) {
+	console.log("converting to record format...");
 	var colNames = Object.keys(inventory[0]);
 	var records = [colNames].concat(inventory.map(function(inv) {
 		return colNames.map(function(key) { return inv[key]; });
 	}));
+	console.log("converted!");
 
-	fs.writeFile("schedule.xlsx", xlsx.build([{name: "Market View", data: records}]), cb);
-};
+	// console.log("building excel file...");
+	// var file = xlsx.build([{name: "Market View", data: records}]);
+	// console.log("built!");
 
-console.log("requesting full schedule...");
-loadSchedule(function(schedule) {
-	//printSchedule(schedule);
-	console.log("generating inventory...");
-	var inventory = generateInventory(schedule);
-	//console.log(inventory);
-	console.log("writing excel file...");
-	createExcelFile(inventory, function(err) {
+	console.log("writing file...");
+	fs.writeFile("schedule.xlsx", JSON.stringify(records), function(err) {
 		if(err) {
-			console.log(err);
-			return;
+			console.log("Error: ", err);
+			process.exit(1);
 		}
 
 		console.log("file written!");
 	});
+};
+
+loadSchedule(function(schedule) {
+	//printSchedule(schedule);
+	var inventory = generateInventory(schedule);
+	createExcelFile(inventory);
 });
