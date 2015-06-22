@@ -137,6 +137,11 @@ var generateInventory = function(schedule) {
 			}).map(excludeIgnoredCols);
 		}).reduce(concat);
 	}).reduce(concat);
+
+	var limit = nconf.get("limit");
+	if(limit)
+		inventory = inventory.slice(0, limit);
+
 	console.log("conversion complete!");
 
 	if(nconf.get("dmas")) {
