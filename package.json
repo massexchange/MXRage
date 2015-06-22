@@ -8,6 +8,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "csv-stringify": "0.0.8",
     "moment": "^2.10.3",
     "nconf": "^0.7.1",
     "node-xlsx": "^0.5.1",

@@ -1,7 +1,7 @@
 var fs = require("fs"),
 	path = require("path"),
 	TVRage = require("tvragejson"),
-	xlsx = require('node-xlsx'),
+	stringify = require("csv-stringify"),
 	moment = require("moment"),
 	nconf = require("nconf"),
 
@@ -179,14 +179,19 @@ var createExcelFile = function(inventory, cb) {
 	// var file = xlsx.build([{name: "Market View", data: records}]);
 	// console.log("built!");
 
-	console.log("writing file...");
-	fs.writeFile("schedule.xlsx", JSON.stringify(records), function(err) {
-		if(err) {
-			console.log("Error: ", err);
-			process.exit(1);
-		}
+	console.log("building csv file...");
+	var file = stringify(records, function(err, out) {
+		console.log("built!");
 
-		console.log("file written!");
+		console.log("writing file...");
+		fs.writeFile("schedule.csv", out, function(err) {
+			if(err) {
+				console.log("Error: ", err);
+				process.exit(1);
+			}
+
+			console.log("file written!");
+		});
 	});
 };
 
