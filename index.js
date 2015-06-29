@@ -127,7 +127,7 @@ var generateInventory = function(schedule) {
 				return {
 					MONTH: parsedDay,
 					Time: parsedTime.format("h:mm A"),
-					Network: show.network[0],
+					Network: show.network,
 					Show: show.$.name,
 					Episode: show.ep[0],
 					Title: show.title[0],
