@@ -79,7 +79,11 @@ var saveSchedule = function(schedule) {
 var fetchSchedule = function(cb) {
     console.log("requesting full schedule...");
     TVRage.fullSchedule("US", function(err, res) {
+        if(err)
+            throw err;
+
         console.log("schedule get!");
+        
         saveSchedule(res.schedule);
         cb(res.schedule);
     });
@@ -116,7 +120,7 @@ var excludeIgnoredCols = function(inv) {
 var generateInventory = function(schedule) {
     console.log("converting to inventory...");
     var inventory = schedule.DAY.map(function(day) {
-        var parsedDay = parseDay(day.$.attr)._d;
+        var parsedDay = parseDay(day.$.attr);
 
         var times = Array.isArray(day.time) ? day.time : [day.time];
         return times.map(function(time) {
@@ -125,7 +129,7 @@ var generateInventory = function(schedule) {
             var shows = Array.isArray(time.show) ? time.show : [time.show];
             return shows.map(function(show) {
                 return {
-                    MONTH: parsedDay,
+                    Date: parsedDay.format("L"),
                     Time: parsedTime.format("h:mm A"),
                     Network: show.network,
                     Show: show.$.name,
