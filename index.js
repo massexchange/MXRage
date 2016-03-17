@@ -5,7 +5,8 @@ var fs = require("fs"),
     moment = require("moment"),
     nconf = require("nconf"),
 
-    DMAs = require("./dmas.json");
+    DMAs = require("./dmas.json"),
+    daypart = require("./daypart");
 
 nconf.file("config.json").defaults({
     impressions: {
@@ -13,26 +14,6 @@ nconf.file("config.json").defaults({
         lower: 30
     }
 });
-
-var dayParts = {
-    2: "Overnight",
-    4: "Early Morning",
-    6: "Breakfast",
-    10: "Daytime",
-    17: "Primetime",
-    23: "Late Night"
-};
-
-var determineDayPart = function(time) {
-    var tryGetPart = function(hour) {
-    if(hour === 0) hour = 24;
-
-        return dayParts[hour]
-            ? dayParts[hour]
-            : tryGetPart(--hour);
-    };
-    return tryGetPart(Math.floor(time));
-};
 
 var parseTime = function(time) {
     return moment(time, "hh:mm a");
@@ -83,7 +64,7 @@ var fetchSchedule = function(cb) {
             throw err;
 
         console.log("schedule get!");
-        
+
         saveSchedule(res.schedule);
         cb(res.schedule);
     });
@@ -135,7 +116,7 @@ var generateInventory = function(schedule) {
                     Show: show.$.name,
                     Episode: show.ep[0],
                     Title: show.title[0],
-                    Daypart: determineDayPart(parsedTime.hour()),
+                    Daypart: daypart(parsedTime.hour()),
                     Impressions: generateImpressions()
                 };
             }).map(excludeIgnoredCols);
