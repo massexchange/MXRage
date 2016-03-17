@@ -23,34 +23,6 @@ var parseDay = function(day) {
     return moment(day, "YYYY-MM-DD");
 };
 
-var indent = function(times) { return Array(times ? times : 1).join('\t'); };
-
-var printShow = function(show) {
-    console.log(indent(2), "Show: ", show.$.name);
-    console.log(indent(2), "Show ID: ", show.sid);
-    console.log(indent(2), "Episode: ", show.ep);
-    console.log(indent(2), "Title: ", show.title);
-    console.log(indent(2), "Network: ", show.network);
-    console.log(indent(2), "Link: ", show.link);
-};
-
-var printTime = function(time) {
-    var parsedTime = parseTime(time.$.attr);
-    console.log(indent(), "Time: ", parsedTime.format("h:mm A"));
-    console.log(indent(), "DayPart: ", determineDayPart(parsedTime.hour()));
-    console.log("Shows: ");
-    time.show.forEach(printShow);
-};
-
-var printDay = function(day) {
-    console.log("Day: ", parseDay(day.$.attr).format("MMM Do, YYYY"));
-    day.time.forEach(printTime);
-};
-
-var printSchedule = function(schedule) {
-    schedule.DAY.forEach(printDay);
-};
-
 var saveSchedule = function(schedule) {
     fs.writeFile(path.join(__dirname, "schedule.json"), JSON.stringify(schedule), err => console.log(err));
 };
@@ -122,28 +94,45 @@ var generateInventory = function(episodes) {
 
     console.log("conversion complete!");
 
-    if(nconf.get("dmas")) {
-        console.log("crossing with dmas...");
-        inventory = DMAs.map(function(dma) {
-            return inventory.map(function(inv) {
-                inv.DMA = dma[1];
-                return inv;
-            });
-        }).reduce(concat);
-        console.log("dmas complete!");
-    }
+    var attributes = nconf.get("attributes");
+    if(attributes)
+        inventory = Object.keys(attributes).reduce((invs, attr) => {
+            var values = attributes[attr];
+            console.log(`crossing with 2 ${attr} values...`);
 
-    var slots = nconf.get("slots");
-    if(slots) {
-        console.log("crossing with slots...");
-        inventory = slots.map(function(slot) {
-            return inventory.map(function(inv) {
-                inv.Slot = slot + " secs";
-                return inv;
-            });
-        }).reduce(concat);
-        console.log("slots complete!");
-    }
+            return invs.concat(values.map(attrVal => {
+                return invs.map(inv => {
+                    var newInv = Object.assign({}, inv);
+                    newInv[attr] = attrVal;
+                    return newInv;
+                })
+            }
+            ).reduce(concat));
+        }, inventory);
+
+    // if(nconf.get("dmas")) {
+    //     console.log("crossing with dmas...");
+    //     inventory = DMAs.map(function(dma) {
+    //         return inventory.map(function(inv) {
+    //             var newInv = Object.assign({}, inv);
+    //             newInv.DMA = dma[1];
+    //             return newInv;
+    //         });
+    //     }).reduce(concat);
+    //     console.log("dmas complete!");
+    // }
+    //
+    // var slots = nconf.get("slots");
+    // if(slots) {
+    //     console.log("crossing with slots...");
+    //     inventory = slots.map(function(slot) {
+    //         return inventory.map(function(inv) {
+    //             inv.Slot = slot + " secs";
+    //             return inv;
+    //         });
+    //     }).reduce(concat);
+    //     console.log("slots complete!");
+    // }
 
     console.log("inventory generated!");
 

@@ -1,5 +1,4 @@
 [
-    ["id", "name", "parentids", "countrycode"],
     ["200722", "Lincoln \u0026 Hastings-Kearney NE", "2840", "US"],
     ["200725", "Sioux Falls(Mitchell) SD", "2840", "US"],
     ["200724", "Fargo-Valley City ND", "2840", "US"],

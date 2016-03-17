@@ -6,7 +6,9 @@
     "columns": {
         "ignored": ["Episode", "Title"]
     },
-    "dmas": true,
-    "slots": [30, 60],
+    "attributes": {
+        "dma": ["New York NY", "Los Angeles CA"],
+        "slot": ["30 secs", "60 secs"]
+    },
     "limit": 100
 }
