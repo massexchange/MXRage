@@ -1,0 +1,25 @@
+{
+  "name": "mx-rage",
+  "version": "0.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "csv-stringify": "0.0.8",
+    "moment": "^2.10.3",
+    "nconf": "^0.7.1"
+  },
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/massexchange/MXRage.git"
+  },
+  "bugs": {
+    "url": "https://github.com/massexchange/MXRage/issues"
+  },
+  "homepage": "https://github.com/massexchange/MXRage#readme",
+  "description": ""
+}

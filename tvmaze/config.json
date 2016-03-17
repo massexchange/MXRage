@@ -1,0 +1,12 @@
+{
+    "impressions": {
+        "upper": 150,
+        "lower": 30
+    },
+    "columns": {
+        "ignored": ["Episode", "Title"]
+    },
+    "dmas": true,
+    "slots": [30, 60],
+    "limit": 100
+}
