@@ -8,8 +8,11 @@ var dayParts = {
 };
 
 var determineDayPart = function(time) {
+    if(isNaN(time))
+        throw new Error("must be a number");
+
     var tryGetPart = function(hour) {
-    if(hour === 0) hour = 24;
+        if(hour === 0) hour = 24;
 
         return dayParts[hour]
             ? dayParts[hour]
