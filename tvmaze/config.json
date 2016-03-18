@@ -13,5 +13,8 @@
         "pod": [1, 2],
         "slot": [1, 2],
         "pet": ["Cat", "Dog", "None"]
+    },
+    "days": {
+        "count": 3
     }
 }

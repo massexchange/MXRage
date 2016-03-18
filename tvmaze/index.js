@@ -15,43 +15,65 @@ nconf.file("config.json").defaults({
     }
 });
 
-var parseTime = function(time) {
-    return moment(time, "HH:mm");
+var dateFormat = "YYYY-MM-DD";
+
+var parseTime = time => moment(time, "HH:mm");
+var parseDay = day => moment(day, dateFormat);
+
+var formatDate = date => date.format(dateFormat);
+
+var schedulePath = date => path.join(__dirname, `schedule_${date}.json`);
+
+var saveSchedule = function(date, schedule) {
+    fs.writeFile(schedulePath(date), JSON.stringify(schedule), err => { if(err) { console.log(err); } });
 };
 
-var parseDay = function(day) {
-    return moment(day, "YYYY-MM-DD");
-};
+var fetchSchedule = function(date, cb) {
+    console.log(`requesting schedule for ${date}...`);
 
-var saveSchedule = function(schedule) {
-    fs.writeFile(path.join(__dirname, "schedule.json"), JSON.stringify(schedule), err => console.log(err));
-};
-
-var fetchSchedule = function(cb) {
-    console.log("requesting full schedule...");
-
-    tvmaze.getSchedule("US", '', (err, episodes) => {
+    tvmaze.getSchedule("US", date, (err, episodes) => {
         if(err)
             throw err;
 
-        console.log("schedule get!");
+        console.log(`${date} schedule get!`);
 
-        saveSchedule(episodes);
+        saveSchedule(date, episodes);
         cb(episodes);
     });
 };
 
-var loadSchedule = function(cb) {
+var loadSchedule = function(dates, cb) {
     console.log("checking for cached schedule...");
-    fs.readFile(path.join(__dirname, "schedule.json"), function(err, contents) {
+
+    var schedules = {};
+
+    var addScheduleCb = date => schedule => {
+        schedules[date] = schedule;
+
+        var schedKeys = Object.keys(schedules);
+        //if we have all requested schedules
+        if(schedKeys.length == dates.length)
+            //stick em all into one array and pass it on
+            cb(schedKeys.map(key => schedules[key]).reduce(concat));
+    }
+
+    var fileCb = date => (err, data) => {
+        var addSchedule = addScheduleCb(date);
+
+        //if we don't have this schedule cached
         if(err && err.code == "ENOENT") {
-            console.log("no cache!");
-            fetchSchedule(cb);
+            console.log(`no cache for ${date}!`);
+            fetchSchedule(date, addSchedule);
             return;
         }
-        console.log("loaded!");
-        cb(JSON.parse(contents));
-    });
+
+        console.log(`loaded cached schedule for ${date}`);
+        addSchedule(JSON.parse(data));
+    };
+
+    //attempt to load cached schedules
+    dates.map(date => [date, path.join(__dirname, `schedule_${date}.json`)])
+         .forEach(([date, path]) => fs.readFile(path, fileCb(date)));
 };
 
 var concat = function(a, b) {
@@ -73,7 +95,7 @@ var generateInventory = function(episodes) {
 
     var inventory = episodes.map(function(episode) {
         var parsedDay = parseDay(episode.airdate);
-        var parsedTime = parseTime(episode.airtime);
+        var parsedTime = parseTime(episode.airtime || "12:00");
 
         return {
             date: parsedDay.format("L"),
@@ -138,7 +160,19 @@ var createCsvFile = function(inventory, cb) {
     });
 };
 
-loadSchedule(function(schedule) {
+var range = function (a, b) {
+    var out = [];
+    for(var i = a; i <= b; i++) out.push(i);
+    return out;
+};
+
+var today = moment();
+var dateCount = nconf.get("days:count") || 1;
+var dates = range(0, dateCount-1)
+    .map(days => today.clone().add(days, 'd'))
+    .map(formatDate);
+
+loadSchedule(dates, schedule => {
     var inventory = generateInventory(schedule);
     createCsvFile(inventory);
 });
