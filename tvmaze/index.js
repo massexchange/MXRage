@@ -100,39 +100,14 @@ var generateInventory = function(episodes) {
             var values = attributes[attr];
             console.log(`crossing with 2 ${attr} values...`);
 
-            return invs.concat(values.map(attrVal => {
-                return invs.map(inv => {
+            return values.map(attrVal =>
+                invs.map(inv => {
                     var newInv = Object.assign({}, inv);
                     newInv[attr] = attrVal;
                     return newInv;
                 })
-            }
-            ).reduce(concat));
+            ).reduce(concat);
         }, inventory);
-
-    // if(nconf.get("dmas")) {
-    //     console.log("crossing with dmas...");
-    //     inventory = DMAs.map(function(dma) {
-    //         return inventory.map(function(inv) {
-    //             var newInv = Object.assign({}, inv);
-    //             newInv.DMA = dma[1];
-    //             return newInv;
-    //         });
-    //     }).reduce(concat);
-    //     console.log("dmas complete!");
-    // }
-    //
-    // var slots = nconf.get("slots");
-    // if(slots) {
-    //     console.log("crossing with slots...");
-    //     inventory = slots.map(function(slot) {
-    //         return inventory.map(function(inv) {
-    //             inv.Slot = slot + " secs";
-    //             return inv;
-    //         });
-    //     }).reduce(concat);
-    //     console.log("slots complete!");
-    // }
 
     console.log("inventory generated!");
 
@@ -164,7 +139,6 @@ var createCsvFile = function(inventory, cb) {
 };
 
 loadSchedule(function(schedule) {
-    //printSchedule(schedule);
     var inventory = generateInventory(schedule);
     createCsvFile(inventory);
 });

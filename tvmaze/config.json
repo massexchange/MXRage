@@ -8,7 +8,10 @@
     },
     "attributes": {
         "dma": ["New York NY", "Los Angeles CA"],
-        "slot": ["30 secs", "60 secs"]
-    },
-    "limit": 100
+        "gender": ["Male", "Female"],
+        "age": ["18-24", "25-34"],
+        "pod": [1, 2],
+        "slot": [1, 2],
+        "pet": ["Cat", "Dog", "None"]
+    }
 }
